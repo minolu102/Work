@@ -1,0 +1,398 @@
+# accounting/models.py
+from django.db import models
+from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
+from decimal import Decimal
+from core.models import BaseModel, Company, Sequence
+
+class ChartOfAccount(BaseModel):
+    """Chart of Accounts - ผังบัญชี"""
+    ACCOUNT_TYPES = [
+        ('asset', 'Asset - สินทรัพย์'),
+        ('liability', 'Liability - หนี้สิน'),
+        ('equity', 'Equity - ส่วนของเจ้าของ'),
+        ('income', 'Income - รายได้'),
+        ('expense', 'Expense - ค่าใช้จ่าย'),
+    ]
+    
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    code = models.CharField(max_length=20)
+    name = models.CharField(max_length=255)
+    account_type = models.CharField(max_length=20, choices=ACCOUNT_TYPES)
+    parent_account = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='sub_accounts')
+    level = models.IntegerField(default=1)
+    is_header = models.BooleanField(default=False)  # บัญชีหัวข้อ
+    is_control = models.BooleanField(default=False)  # บัญชีควบคุม
+    balance = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    
+    class Meta:
+        unique_together = ['company', 'code']
+        ordering = ['code']
+        
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+    
+    def get_balance(self):
+        """คำนวณยอดคงเหลือจาก Journal Entries"""
+        from django.db.models import Sum
+        debit_total = self.journal_entries.filter(entry_type='debit').aggregate(
+            total=Sum('amount'))['total'] or 0
+        credit_total = self.journal_entries.filter(entry_type='credit').aggregate(
+            total=Sum('amount'))['total'] or 0
+        
+        if self.account_type in ['asset', 'expense']:
+            return debit_total - credit_total
+        else:  # liability, equity, income
+            return credit_total - debit_total
+
+class JournalEntry(BaseModel):
+    """รายการบัญชี"""
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    entry_number = models.CharField(max_length=50)
+    entry_date = models.DateField()
+    reference = models.CharField(max_length=100, null=True, blank=True)
+    description = models.TextField()
+    total_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=[
+        ('draft', 'Draft'),
+        ('posted', 'Posted'),
+        ('reversed', 'Reversed'),
+    ], default='draft')
+    posted_by = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True)
+    posted_date = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-entry_date', '-entry_number']
+        
+    def __str__(self):
+        return f"{self.entry_number} - {self.description[:50]}"
+    
+    def post_entry(self, user):
+        """Post journal entry"""
+        if self.status == 'posted':
+            raise ValueError("Entry already posted")
+        
+        # Validate debit = credit
+        debit_total = self.journal_lines.filter(entry_type='debit').aggregate(
+            total=models.Sum('amount'))['total'] or 0
+        credit_total = self.journal_lines.filter(entry_type='credit').aggregate(
+            total=models.Sum('amount'))['total'] or 0
+        
+        if debit_total != credit_total:
+            raise ValueError(f"Debit ({debit_total}) must equal Credit ({credit_total})")
+        
+        self.status = 'posted'
+        self.posted_by = user
+        self.posted_date = timezone.now()
+        self.save()
+        
+        # Update account balances
+        for line in self.journal_lines.all():
+            line.account.balance = line.account.get_balance()
+            line.account.save()
+
+class JournalLine(BaseModel):
+    """รายการบัญชีแยกประเภท"""
+    journal_entry = models.ForeignKey(JournalEntry, on_delete=models.CASCADE, related_name='journal_lines')
+    account = models.ForeignKey(ChartOfAccount, on_delete=models.CASCADE, related_name='journal_entries')
+    entry_type = models.CharField(max_length=10, choices=[
+        ('debit', 'Debit'),
+        ('credit', 'Credit'),
+    ])
+    amount = models.DecimalField(max_digits=15, decimal_places=2, validators=[MinValueValidator(0)])
+    description = models.CharField(max_length=255, null=True, blank=True)
+    
+    class Meta:
+        ordering = ['entry_type', 'account__code']
+        
+    def __str__(self):
+        return f"{self.account.code} - {self.entry_type}: {self.amount:,.2f}"
+
+class FiscalYear(BaseModel):
+    """ปีบัญชี"""
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    year = models.IntegerField()
+    start_date = models.DateField()
+    end_date = models.DateField()
+    is_current = models.BooleanField(default=False)
+    is_closed = models.BooleanField(default=False)
+    
+    class Meta:
+        unique_together = ['company', 'year']
+        
+    def __str__(self):
+        return f"FY {self.year} ({self.start_date} - {self.end_date})"
+
+class AccountingPeriod(BaseModel):
+    """งวดบัญชี"""
+    fiscal_year = models.ForeignKey(FiscalYear, on_delete=models.CASCADE, related_name='periods')
+    period_number = models.IntegerField()
+    start_date = models.DateField()
+    end_date = models.DateField()
+    is_closed = models.BooleanField(default=False)
+    
+    class Meta:
+        unique_together = ['fiscal_year', 'period_number']
+        ordering = ['fiscal_year', 'period_number']
+        
+    def __str__(self):
+        return f"Period {self.period_number} - {self.fiscal_year.year}"
+
+class Tax(BaseModel):
+    """ภาษี"""
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=20)
+    rate = models.DecimalField(max_digits=5, decimal_places=4, validators=[MinValueValidator(0), MaxValueValidator(1)])
+    tax_account = models.ForeignKey(ChartOfAccount, on_delete=models.PROTECT)
+    is_inclusive = models.BooleanField(default=False)  # ภาษีรวมในราคา
+    
+    class Meta:
+        unique_together = ['company', 'code']
+        
+    def __str__(self):
+        return f"{self.name} ({self.rate*100:.2f}%)"
+    
+    def calculate_tax(self, amount):
+        """คำนวณภาษี"""
+        if self.is_inclusive:
+            # ภาษีรวมในราคา
+            tax_amount = amount * self.rate / (1 + self.rate)
+            base_amount = amount - tax_amount
+        else:
+            # ภาษีแยกจากราคา
+            base_amount = amount
+            tax_amount = amount * self.rate
+        
+        return {
+            'base_amount': round(base_amount, 2),
+            'tax_amount': round(tax_amount, 2),
+            'total_amount': round(base_amount + tax_amount, 2)
+        }
+
+# accounting/views.py
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import JsonResponse
+from django.db.models import Sum, Q
+from django.utils import timezone
+from .models import ChartOfAccount, JournalEntry, JournalLine, FiscalYear
+from .forms import ChartOfAccountForm, JournalEntryForm, JournalLineForm
+
+@login_required
+def chart_of_accounts(request):
+    """แสดงผังบัญชี"""
+    accounts = ChartOfAccount.objects.filter(
+        company=request.user.profile.company,
+        is_active=True
+    ).select_related('parent_account').order_by('code')
+    
+    context = {
+        'accounts': accounts,
+        'title': 'Chart of Accounts - ผังบัญชี'
+    }
+    return render(request, 'accounting/chart_of_accounts.html', context)
+
+@login_required
+def account_detail(request, account_id):
+    """รายละเอียดบัญชี"""
+    account = get_object_or_404(ChartOfAccount, id=account_id, company=request.user.profile.company)
+    
+    # ดึงรายการบัญชีแยกประเภท
+    journal_lines = account.journal_entries.select_related(
+        'journal_entry'
+    ).filter(
+        journal_entry__status='posted'
+    ).order_by('-journal_entry__entry_date')[:50]
+    
+    # คำนวณยอดคงเหลือ
+    current_balance = account.get_balance()
+    
+    context = {
+        'account': account,
+        'journal_lines': journal_lines,
+        'current_balance': current_balance,
+        'title': f'Account Details - {account.name}'
+    }
+    return render(request, 'accounting/account_detail.html', context)
+
+@login_required
+def journal_entries(request):
+    """แสดงรายการบัญชี"""
+    entries = JournalEntry.objects.filter(
+        company=request.user.profile.company
+    ).select_related('posted_by').order_by('-entry_date')
+    
+    # Filter by status
+    status_filter = request.GET.get('status', 'all')
+    if status_filter != 'all':
+        entries = entries.filter(status=status_filter)
+    
+    context = {
+        'entries': entries,
+        'status_filter': status_filter,
+        'title': 'Journal Entries - รายการบัญชี'
+    }
+    return render(request, 'accounting/journal_entries.html', context)
+
+@login_required
+def journal_entry_detail(request, entry_id):
+    """รายละเอียดรายการบัญชี"""
+    entry = get_object_or_404(
+        JournalEntry, 
+        id=entry_id, 
+        company=request.user.profile.company
+    )
+    
+    journal_lines = entry.journal_lines.select_related('account').all()
+    
+    context = {
+        'entry': entry,
+        'journal_lines': journal_lines,
+        'title': f'Journal Entry - {entry.entry_number}'
+    }
+    return render(request, 'accounting/journal_entry_detail.html', context)
+
+@login_required
+def create_journal_entry(request):
+    """สร้างรายการบัญชีใหม่"""
+    if request.method == 'POST':
+        form = JournalEntryForm(request.POST)
+        if form.is_valid():
+            entry = form.save(commit=False)
+            entry.company = request.user.profile.company
+            entry.created_by = request.user
+            
+            # Generate entry number
+            sequence = Sequence.objects.get_or_create(
+                sequence_type='journal_entry',
+                defaults={'prefix': 'JE', 'current_number': 0}
+            )[0]
+            entry.entry_number = sequence.get_next_number()
+            entry.save()
+            
+            messages.success(request, 'Journal entry created successfully.')
+            return redirect('accounting:journal_entry_detail', entry_id=entry.id)
+    else:
+        form = JournalEntryForm()
+    
+    context = {
+        'form': form,
+        'title': 'Create Journal Entry'
+    }
+    return render(request, 'accounting/journal_entry_form.html', context)
+
+@login_required
+def post_journal_entry(request, entry_id):
+    """Post รายการบัญชี"""
+    if request.method == 'POST':
+        entry = get_object_or_404(
+            JournalEntry,
+            id=entry_id,
+            company=request.user.profile.company
+        )
+        
+        try:
+            entry.post_entry(request.user)
+            messages.success(request, f'Journal entry {entry.entry_number} posted successfully.')
+        except ValueError as e:
+            messages.error(request, str(e))
+        
+        return redirect('accounting:journal_entry_detail', entry_id=entry.id)
+    
+    return redirect('accounting:journal_entries')
+
+@login_required
+def trial_balance(request):
+    """งบทดลอง"""
+    company = request.user.profile.company
+    
+    # Get fiscal year
+    try:
+        fiscal_year = FiscalYear.objects.get(company=company, is_current=True)
+    except FiscalYear.DoesNotExist:
+        messages.error(request, 'No active fiscal year found.')
+        return redirect('accounting:chart_of_accounts')
+    
+    # Get all accounts with balances
+    accounts = ChartOfAccount.objects.filter(
+        company=company,
+        is_active=True,
+        is_header=False
+    ).order_by('code')
+    
+    trial_balance_data = []
+    total_debit = 0
+    total_credit = 0
+    
+    for account in accounts:
+        balance = account.get_balance()
+        
+        if balance != 0:
+            if account.account_type in ['asset', 'expense'] and balance > 0:
+                debit_amount = abs(balance)
+                credit_amount = 0
+            elif account.account_type in ['asset', 'expense'] and balance < 0:
+                debit_amount = 0
+                credit_amount = abs(balance)
+            elif account.account_type in ['liability', 'equity', 'income'] and balance > 0:
+                debit_amount = 0
+                credit_amount = abs(balance)
+            else:
+                debit_amount = abs(balance)
+                credit_amount = 0
+            
+            trial_balance_data.append({
+                'account': account,
+                'debit_amount': debit_amount,
+                'credit_amount': credit_amount,
+            })
+            
+            total_debit += debit_amount
+            total_credit += credit_amount
+    
+    context = {
+        'trial_balance_data': trial_balance_data,
+        'total_debit': total_debit,
+        'total_credit': total_credit,
+        'fiscal_year': fiscal_year,
+        'title': 'Trial Balance - งบทดลอง'
+    }
+    return render(request, 'accounting/trial_balance.html', context)
+
+# accounting/forms.py
+from django import forms
+from .models import ChartOfAccount, JournalEntry, JournalLine
+
+class ChartOfAccountForm(forms.ModelForm):
+    class Meta:
+        model = ChartOfAccount
+        fields = ['code', 'name', 'account_type', 'parent_account', 'is_header']
+        widgets = {
+            'code': forms.TextInput(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'account_type': forms.Select(attrs={'class': 'form-control'}),
+            'parent_account': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+class JournalEntryForm(forms.ModelForm):
+    class Meta:
+        model = JournalEntry
+        fields = ['entry_date', 'reference', 'description']
+        widgets = {
+            'entry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'reference': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+class JournalLineForm(forms.ModelForm):
+    class Meta:
+        model = JournalLine
+        fields = ['account', 'entry_type', 'amount', 'description']
+        widgets = {
+            'account': forms.Select(attrs={'class': 'form-control'}),
+            'entry_type': forms.Select(attrs={'class': 'form-control'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'description': forms.TextInput(attrs={'class': 'form-control'}),
+        }

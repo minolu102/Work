@@ -1,0 +1,148 @@
+# core/models.py
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+import uuid
+# Create your models here.
+
+class BaseModel(models.Model):
+    """Base model with common fields for all models"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='+', null=True, blank=True)
+    updated_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='+', null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        abstract = True
+
+class Company(BaseModel):
+    """Company information"""
+    name = models.CharField(max_length=255)
+    legal_name = models.CharField(max_length=255)
+    tax_id = models.CharField(max_length=20, unique=True)
+    registration_number = models.CharField(max_length=50, null=True, blank=True)
+    address = models.TextField()
+    phone = models.CharField(max_length=20)
+    email = models.EmailField()
+    website = models.URLField(null=True, blank=True)
+    logo = models.ImageField(upload_to='company/logo/', null=True, blank=True)
+    currency = models.CharField(max_length=3, default='THB')
+    
+    class Meta:
+        verbose_name_plural = "Companies"
+        
+    def __str__(self):
+        return self.name
+
+class Branch(BaseModel):
+    """Company branches"""
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='branches')
+    code = models.CharField(max_length=10, unique=True)
+    name = models.CharField(max_length=255)
+    address = models.TextField()
+    phone = models.CharField(max_length=20)
+    email = models.EmailField()
+    manager = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+class Category(BaseModel):
+    """Generic category model"""
+    name = models.CharField(max_length=255)
+    code = models.CharField(max_length=20)
+    description = models.TextField(null=True, blank=True)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
+    category_type = models.CharField(max_length=50)  # product, account, etc.
+    
+    class Meta:
+        verbose_name_plural = "Categories"
+        unique_together = ['code', 'category_type']
+        
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+class Address(BaseModel):
+    """Address model for customers, suppliers, employees"""
+    address_type = models.CharField(max_length=20, choices=[
+        ('billing', 'Billing Address'),
+        ('shipping', 'Shipping Address'),
+        ('home', 'Home Address'),
+        ('office', 'Office Address'),
+    ])
+    address_line_1 = models.CharField(max_length=255)
+    address_line_2 = models.CharField(max_length=255, null=True, blank=True)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    postal_code = models.CharField(max_length=10)
+    country = models.CharField(max_length=100, default='Thailand')
+    is_default = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"{self.address_line_1}, {self.city}"
+
+class Contact(BaseModel):
+    """Contact information"""
+    contact_type = models.CharField(max_length=20, choices=[
+        ('phone', 'Phone'),
+        ('email', 'Email'),
+        ('fax', 'Fax'),
+        ('line', 'LINE ID'),
+        ('facebook', 'Facebook'),
+    ])
+    value = models.CharField(max_length=255)
+    is_primary = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"{self.contact_type}: {self.value}"
+
+class Sequence(BaseModel):
+    """Auto sequence generator for document numbers"""
+    sequence_type = models.CharField(max_length=50, unique=True)
+    prefix = models.CharField(max_length=10, null=True, blank=True)
+    suffix = models.CharField(max_length=10, null=True, blank=True)
+    padding = models.IntegerField(default=6)
+    current_number = models.IntegerField(default=0)
+    reset_yearly = models.BooleanField(default=True)
+    reset_monthly = models.BooleanField(default=False)
+    
+    def get_next_number(self):
+        """Generate next sequence number"""
+        self.current_number += 1
+        self.save()
+        
+        number = str(self.current_number).zfill(self.padding)
+        
+        if self.reset_yearly:
+            year = timezone.now().year
+            if self.reset_monthly:
+                month = timezone.now().strftime('%m')
+                return f"{self.prefix or ''}{year}{month}{number}{self.suffix or ''}"
+            return f"{self.prefix or ''}{year}{number}{self.suffix or ''}"
+        
+        return f"{self.prefix or ''}{number}{self.suffix or ''}"
+    
+    def __str__(self):
+        return f"{self.sequence_type} - Current: {self.current_number}"
+
+class AuditLog(models.Model):
+    """Audit trail for all model changes"""
+    model_name = models.CharField(max_length=100)
+    object_id = models.CharField(max_length=100)
+    action = models.CharField(max_length=10, choices=[
+        ('CREATE', 'Create'),
+        ('UPDATE', 'Update'),
+        ('DELETE', 'Delete'),
+    ])
+    changes = models.JSONField(default=dict)
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-timestamp']
+        
+    def __str__(self):
+        return f"{self.model_name} {self.action} by {self.user.username}"

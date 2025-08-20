@@ -1,0 +1,179 @@
+# core/management/commands/setup_erp.py
+from django.core.management.base import BaseCommand
+from django.contrib.auth.models import User, Group, Permission
+from django.contrib.contenttypes.models import ContentType
+from core.models import Company, Sequence
+from accounting.models import ChartOfAccount, FiscalYear, Tax
+from inventory.models import ProductCategory, UnitOfMeasure, Warehouse, Location
+from hr.models import Department, Position
+from datetime import date
+
+class Command(BaseCommand):
+    help = 'Setup initial ERP data including company, chart of accounts, and basic configurations'
+    
+    def add_arguments(self, parser):
+        parser.add_argument('--company-name', type=str, default='My Company', help='Company name')
+        parser.add_argument('--admin-email', type=str, default='admin@example.com', help='Admin email')
+        parser.add_argument('--admin-password', type=str, default='admin123', help='Admin password')
+    
+    def handle(self, *args, **options):
+        self.stdout.write(self.style.SUCCESS('Setting up ERP System...'))
+        
+        # Create superuser
+        self.create_superuser(options['admin_email'], options['admin_password'])
+        
+        # Create company
+        company = self.create_company(options['company_name'])
+        
+        # Setup permissions and groups
+        self.setup_user_groups()
+        
+        # Setup chart of accounts
+        self.setup_chart_of_accounts(company)
+        
+        # Setup inventory basics
+        self.setup_inventory_basics(company)
+        
+        # Setup HR basics
+        self.setup_hr_basics(company)
+        
+        # Setup fiscal year
+        self.setup_fiscal_year(company)
+        
+        # Setup sequences
+        self.setup_sequences()
+        
+        # Setup taxes
+        self.setup_taxes(company)
+        
+        self.stdout.write(self.style.SUCCESS('ERP System setup completed successfully!'))
+    
+    def create_superuser(self, email, password):
+        if not User.objects.filter(username='admin').exists():
+            User.objects.create_superuser(
+                username='admin',
+                email=email,
+                password=password,
+                first_name='System',
+                last_name='Administrator'
+            )
+            self.stdout.write('✓ Created superuser: admin')
+        else:
+            self.stdout.write('✓ Superuser already exists')
+    
+    def create_company(self, company_name):
+        company, created = Company.objects.get_or_create(
+            name=company_name,
+            defaults={
+                'legal_name': company_name + ' Co., Ltd.',
+                'tax_id': '0000000000000',
+                'address': '123 Business Street, Bangkok 10100',
+                'phone': '+66-2-123-4567',
+                'email': 'info@company.com',
+                'currency': 'THB'
+            }
+        )
+        if created:
+            self.stdout.write(f'✓ Created company: {company_name}')
+        else:
+            self.stdout.write(f'✓ Company already exists: {company_name}')
+        return company
+    
+    def setup_user_groups(self):
+        groups_permissions = {
+            'Accounting Manager': [
+                'accounting.add_chartofaccount', 'accounting.change_chartofaccount', 
+                'accounting.view_chartofaccount', 'accounting.add_journalentry',
+                'accounting.change_journalentry', 'accounting.view_journalentry'
+            ],
+            'Sales Manager': [
+                'sales.add_customer', 'sales.change_customer', 'sales.view_customer',
+                'sales.add_salesorder', 'sales.change_salesorder', 'sales.view_salesorder'
+            ],
+            'Purchasing Manager': [
+                'purchasing.add_supplier', 'purchasing.change_supplier', 'purchasing.view_supplier',
+                'purchasing.add_purchaseorder', 'purchasing.change_purchaseorder', 'purchasing.view_purchaseorder'
+            ],
+            'Inventory Manager': [
+                'inventory.add_product', 'inventory.change_product', 'inventory.view_product',
+                'inventory.add_stockmove', 'inventory.change_stockmove', 'inventory.view_stockmove'
+            ],
+            'HR Manager': [
+                'hr.add_employee', 'hr.change_employee', 'hr.view_employee',
+                'hr.add_payroll', 'hr.change_payroll', 'hr.view_payroll'
+            ],
+        }
+        
+        for group_name, permission_codenames in groups_permissions.items():
+            group, created = Group.objects.get_or_create(name=group_name)
+            if created:
+                for codename in permission_codenames:
+                    try:
+                        app_label, perm_codename = codename.split('.')
+                        permission = Permission.objects.get(
+                            content_type__app_label=app_label,
+                            codename=perm_codename
+                        )
+                        group.permissions.add(permission)
+                    except Permission.DoesNotExist:
+                        pass
+                self.stdout.write(f'✓ Created group: {group_name}')
+    
+    def setup_chart_of_accounts(self, company):
+        accounts_data = [
+            # Assets
+            ('1000', 'ASSETS', 'asset', True, None),
+            ('1100', 'Current Assets', 'asset', True, '1000'),
+            ('1101', 'Cash', 'asset', False, '1100'),
+            ('1102', 'Bank Account', 'asset', False, '1100'),
+            ('1110', 'Accounts Receivable', 'asset', False, '1100'),
+            ('1120', 'Inventory', 'asset', False, '1100'),
+            ('1200', 'Fixed Assets', 'asset', True, '1000'),
+            ('1201', 'Equipment', 'asset', False, '1200'),
+            ('1202', 'Accumulated Depreciation - Equipment', 'asset', False, '1200'),
+            
+            # Liabilities
+            ('2000', 'LIABILITIES', 'liability', True, None),
+            ('2100', 'Current Liabilities', 'liability', True, '2000'),
+            ('2101', 'Accounts Payable', 'liability', False, '2100'),
+            ('2102', 'Tax Payable', 'liability', False, '2100'),
+            ('2103', 'Social Security Payable', 'liability', False, '2100'),
+            
+            # Equity
+            ('3000', 'EQUITY', 'equity', True, None),
+            ('3101', 'Share Capital', 'equity', False, '3000'),
+            ('3201', 'Retained Earnings', 'equity', False, '3000'),
+            
+            # Income
+            ('4000', 'INCOME', 'income', True, None),
+            ('4101', 'Sales Revenue', 'income', False, '4000'),
+            ('4102', 'Service Revenue', 'income', False, '4000'),
+            ('4201', 'Other Income', 'income', False, '4000'),
+            
+            # Expenses
+            ('5000', 'EXPENSES', 'expense', True, None),
+            ('5101', 'Cost of Goods Sold', 'expense', False, '5000'),
+            ('5201', 'Salaries Expense', 'expense', False, '5000'),
+            ('5202', 'Rent Expense', 'expense', False, '5000'),
+            ('5203', 'Utilities Expense', 'expense', False, '5000'),
+            ('5204', 'Office Supplies Expense', 'expense', False, '5000'),
+        ]
+        
+        # Create accounts hierarchy
+        account_map = {}
+        for code, name, account_type, is_header, parent_code in accounts_data:
+            parent_account = account_map.get(parent_code) if parent_code else None
+            
+            account, created = ChartOfAccount.objects.get_or_create(
+                company=company,
+                code=code,
+                defaults={
+                    'name': name,
+                    'account_type': account_type,
+                    'is_header': is_header,
+                    'parent_account': parent_account,
+                }
+            )
+            if created:
+                account_map[code] = account
+                self.stdout.write(f'✓ Created account: {name} ({code})')

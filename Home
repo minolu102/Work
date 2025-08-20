@@ -1,0 +1,576 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ title|default:"ERP System" }}{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            margin: 2px 8px;
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+        }
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.2);
+        }
+        .main-content {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .card {
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+        }
+        .table {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white"><i class="fas fa-building"></i> ERP System</h4>
+                        {% if user.profile.company %}
+                            <small class="text-white-50">{{ user.profile.company.name }}</small>
+                        {% endif %}
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                            </a>
+                        </li>
+                        
+                        <!-- Accounting -->
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#accountingMenu">
+                                <i class="fas fa-calculator me-2"></i> Accounting
+                                <i class="fas fa-chevron-down float-end"></i>
+                            </a>
+                            <div class="collapse {% if 'accounting' in request.resolver_match.namespace %}show{% endif %}" id="accountingMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'accounting:chart_of_accounts' %}">
+                                            <i class="fas fa-list me-2"></i> Chart of Accounts
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'accounting:journal_entries' %}">
+                                            <i class="fas fa-book me-2"></i> Journal Entries
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'accounting:trial_balance' %}">
+                                            <i class="fas fa-balance-scale me-2"></i> Trial Balance
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        
+                        <!-- Inventory -->
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#inventoryMenu">
+                                <i class="fas fa-boxes me-2"></i> Inventory
+                                <i class="fas fa-chevron-down float-end"></i>
+                            </a>
+                            <div class="collapse {% if 'inventory' in request.resolver_match.namespace %}show{% endif %}" id="inventoryMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'inventory:product_list' %}">
+                                            <i class="fas fa-box me-2"></i> Products
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'inventory:stock_movements' %}">
+                                            <i class="fas fa-exchange-alt me-2"></i> Stock Movements
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'inventory:inventory_report' %}">
+                                            <i class="fas fa-chart-bar me-2"></i> Inventory Report
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        
+                        <!-- Sales -->
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#salesMenu">
+                                <i class="fas fa-shopping-cart me-2"></i> Sales
+                                <i class="fas fa-chevron-down float-end"></i>
+                            </a>
+                            <div class="collapse {% if 'sales' in request.resolver_match.namespace %}show{% endif %}" id="salesMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'sales:customer_list' %}">
+                                            <i class="fas fa-users me-2"></i> Customers
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'sales:sales_order_list' %}">
+                                            <i class="fas fa-file-alt me-2"></i> Sales Orders
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'sales:sales_invoice_list' %}">
+                                            <i class="fas fa-receipt me-2"></i> Invoices
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        
+                        <!-- Purchasing -->
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#purchasingMenu">
+                                <i class="fas fa-truck me-2"></i> Purchasing
+                                <i class="fas fa-chevron-down float-end"></i>
+                            </a>
+                            <div class="collapse {% if 'purchasing' in request.resolver_match.namespace %}show{% endif %}" id="purchasingMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'purchasing:supplier_list' %}">
+                                            <i class="fas fa-industry me-2"></i> Suppliers
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'purchasing:purchase_order_list' %}">
+                                            <i class="fas fa-file-invoice me-2"></i> Purchase Orders
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'purchasing:purchase_bill_list' %}">
+                                            <i class="fas fa-file-invoice-dollar me-2"></i> Bills
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        
+                        <!-- HR -->
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#hrMenu">
+                                <i class="fas fa-user-tie me-2"></i> Human Resources
+                                <i class="fas fa-chevron-down float-end"></i>
+                            </a>
+                            <div class="collapse {% if 'hr' in request.resolver_match.namespace %}show{% endif %}" id="hrMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'hr:employee_list' %}">
+                                            <i class="fas fa-users me-2"></i> Employees
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'hr:attendance_list' %}">
+                                            <i class="fas fa-clock me-2"></i> Attendance
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'hr:payroll_list' %}">
+                                            <i class="fas fa-money-check-alt me-2"></i> Payroll
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <!-- Top navbar -->
+                <nav class="navbar navbar-expand-lg mb-4">
+                    <div class="container-fluid">
+                        <button class="navbar-toggler d-md-none" type="button" data-bs-toggle="collapse" data-bs-target=".sidebar">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        
+                        <div class="navbar-nav ms-auto">
+                            <div class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle me-1"></i>
+                                    {{ user.get_full_name|default:user.username }}
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'admin:logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+                
+                <!-- Breadcrumb -->
+                {% block breadcrumb %}
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+                        {% block breadcrumb_items %}{% endblock %}
+                    </ol>
+                </nav>
+                {% endblock %}
+                
+                <!-- Page Header -->
+                {% if title %}
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2"><i class="{% block page_icon %}fas fa-tachometer-alt{% endblock %} me-2"></i>{{ title }}</h1>
+                    {% block page_actions %}{% endblock %}
+                </div>
+                {% endif %}
+                
+                <!-- Messages -->
+                {% if messages %}
+                <div class="alert-container">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>{{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Main Content -->
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script>
+        // Auto-hide messages after 5 seconds
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+        
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+
+<!-- templates/dashboard/main.html -->
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Dashboard - ERP System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Statistics Cards -->
+    <div class="col-md-3 mb-4">
+        <div class="card stats-card text-center">
+            <div class="card-body">
+                <i class="fas fa-dollar-sign fa-3x mb-3"></i>
+                <h4>${{ total_sales|floatformat:2|intcomma }}</h4>
+                <p class="mb-0">Total Sales (This Month)</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card bg-success text-white text-center">
+            <div class="card-body">
+                <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                <h4>{{ total_orders|intcomma }}</h4>
+                <p class="mb-0">Sales Orders</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card bg-info text-white text-center">
+            <div class="card-body">
+                <i class="fas fa-boxes fa-3x mb-3"></i>
+                <h4>{{ total_products|intcomma }}</h4>
+                <p class="mb-0">Products</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card bg-warning text-white text-center">
+            <div class="card-body">
+                <i class="fas fa-users fa-3x mb-3"></i>
+                <h4>{{ total_customers|intcomma }}</h4>
+                <p class="mb-0">Customers</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Sales Chart -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-line me-2"></i>Sales Trend (Last 12 Months)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="salesChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Products -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-star me-2"></i>Top Products</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for product in top_products %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ product.name }}</h6>
+                            <small class="text-muted">{{ product.code }}</small>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">{{ product.total_sold|intcomma }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Orders -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-file-alt me-2"></i>Recent Sales Orders</h5>
+                <a href="{% url 'sales:sales_order_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td><a href="#" class="text-decoration-none">{{ order.order_number }}</a></td>
+                                <td>{{ order.customer.name }}</td>
+                                <td>${{ order.total_amount|floatformat:2|intcomma }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if order.status == 'confirmed' %}bg-success
+                                        {% elif order.status == 'draft' %}bg-secondary
+                                        {% elif order.status == 'delivered' %}bg-info
+                                        {% else %}bg-warning{% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Low Stock Alert -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Low Stock Alert</h5>
+                <a href="{% url 'inventory:product_list' %}?low_stock=1" class="btn btn-sm btn-outline-warning">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Current Stock</th>
+                                <th>Reorder Level</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in low_stock_products %}
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong>{{ product.name }}</strong><br>
+                                        <small class="text-muted">{{ product.code }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-danger">{{ product.quantity_on_hand|intcomma }}</span>
+                                </td>
+                                <td>{{ product.reorder_level|intcomma }}</td>
+                                <td>
+                                    <a href="#" class="btn btn-sm btn-outline-primary">Reorder</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2 col-6 text-center mb-3">
+                        <a href="{% url 'sales:create_sales_order' %}" class="btn btn-outline-primary btn-lg d-block">
+                            <i class="fas fa-plus fa-2x mb-2"></i><br>
+                            New Sales Order
+                        </a>
+                    </div>
+                    <div class="col-md-2 col-6 text-center mb-3">
+                        <a href="{% url 'purchasing:create_purchase_order' %}" class="btn btn-outline-success btn-lg d-block">
+                            <i class="fas fa-shopping-cart fa-2x mb-2"></i><br>
+                            New Purchase Order
+                        </a>
+                    </div>
+                    <div class="col-md-2 col-6 text-center mb-3">
+                        <a href="{% url 'inventory:create_product' %}" class="btn btn-outline-info btn-lg d-block">
+                            <i class="fas fa-box fa-2x mb-2"></i><br>
+                            Add Product
+                        </a>
+                    </div>
+                    <div class="col-md-2 col-6 text-center mb-3">
+                        <a href="{% url 'sales:create_customer' %}" class="btn btn-outline-warning btn-lg d-block">
+                            <i class="fas fa-user-plus fa-2x mb-2"></i><br>
+                            Add Customer
+                        </a>
+                    </div>
+                    <div class="col-md-2 col-6 text-center mb-3">
+                        <a href="{% url 'accounting:create_journal_entry' %}" class="btn btn-outline-secondary btn-lg d-block">
+                            <i class="fas fa-book fa-2x mb-2"></i><br>
+                            Journal Entry
+                        </a>
+                    </div>
+                    <div class="col-md-2 col-6 text-center mb-3">
+                        <a href="{% url 'hr:create_employee' %}" class="btn btn-outline-dark btn-lg d-block">
+                            <i class="fas fa-user-tie fa-2x mb-2"></i><br>
+                            Add Employee
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Sales Chart
+const salesCtx = document.getElementById('salesChart').getContext('2d');
+const salesChart = new Chart(salesCtx, {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: [{
+            label: 'Sales',
+            data: [12000, 15000, 18000, 14000, 22000, 25000, 28000, 24000, 26000, 30000, 32000, 35000],
+            borderColor: 'rgb(102, 126, 234)',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toLocaleString();
+                    }
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

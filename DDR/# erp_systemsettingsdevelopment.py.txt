@@ -1,0 +1,37 @@
+# erp_system/settings/development.py
+from .base import *
+
+# Debug settings
+DEBUG = True
+ALLOWED_HOSTS = ['*']
+
+# Database for development
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'ims_full.db',
+    }
+}
+
+# Email backend for development
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Debug toolbar (install django-debug-toolbar first)
+if DEBUG:
+    try:
+        import debug_toolbar
+        INSTALLED_APPS.append('debug_toolbar')
+        MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+        INTERNAL_IPS = ['127.0.0.1']
+    except ImportError:
+        pass
+
+# Disable caching in development
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }
+}
+
+# erp_system/settings/production.py
+from .base import *

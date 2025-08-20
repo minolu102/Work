@@ -1,0 +1,512 @@
+# โครงสร้าง ERP System แบบเต็ม
+
+```
+\\pn-family\Project\PN-Group\
+├── manage.py
+├── requirements.txt
+├── README.md
+├── .env.example
+├── .gitignore
+│
+├── erp_system/                          # Main Django project
+│   ├── __init__.py
+│   ├── settings/
+│   │   ├── __init__.py
+│   │   ├── base.py                      # Base settings
+│   │   ├── development.py               # Development settings
+│   │   ├── production.py                # Production settings
+│   │   └── testing.py                   # Testing settings
+│   ├── urls.py
+│   ├── wsgi.py
+│   ├── asgi.py                          # For async support
+│   └── celery.py                        # For background tasks
+│
+├── static/                              # Static files
+│   ├── css/
+│   ├── js/
+│   ├── img/
+│   └── fonts/
+│
+├── media/                               # User uploaded files
+│   ├── documents/
+│   ├── images/
+│   └── reports/
+│
+├── templates/                           # Global templates
+│   ├── base.html
+│   ├── auth/
+│   ├── dashboard/
+│   └── components/
+│
+├── locale/                              # Internationalization
+│   ├── th/
+│   └── en/
+│
+├── logs/                               # Application logs
+│   ├── django.log
+│   ├── celery.log
+│   └── error.log
+│
+├── core/                               # Core/Common utilities
+│   ├── __init__.py
+│   ├── models.py                       # Base models
+│   ├── permissions.py                  # Custom permissions
+│   ├── utils.py                        # Utility functions
+│   ├── validators.py                   # Custom validators
+│   ├── mixins.py                       # Model/View mixins
+│   ├── exceptions.py                   # Custom exceptions
+│   ├── decorators.py                   # Custom decorators
+│   └── middleware.py                   # Custom middleware
+│
+├── users/                              # User Management
+│   ├── __init__.py
+│   ├── models.py                       # User, Profile models
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── serializers.py                  # For API
+│   ├── permissions.py
+│   ├── signals.py
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   │       ├── __init__.py
+│   │       └── create_superuser.py
+│   ├── migrations/
+│   └── templates/users/
+│
+├── authentication/                     # Authentication & Authorization
+│   ├── __init__.py
+│   ├── views.py                       # Login, logout, password reset
+│   ├── urls.py
+│   ├── forms.py
+│   ├── backends.py                    # Custom auth backends
+│   ├── tokens.py                      # JWT, API tokens
+│   └── templates/auth/
+│
+├── dashboard/                          # Main Dashboard
+│   ├── __init__.py
+│   ├── views.py                       # Dashboard views
+│   ├── urls.py
+│   ├── widgets.py                     # Dashboard widgets
+│   ├── charts.py                      # Chart data
+│   └── templates/dashboard/
+│
+├── accounting/                         # บัญชี
+│   ├── __init__.py
+│   ├── models.py                      # Account, Transaction, etc.
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── serializers.py
+│   ├── signals.py
+│   ├── utils.py                       # Accounting utilities
+│   ├── reports.py                     # Financial reports
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   │       ├── __init__.py
+│   │       └── init_accounts.py
+│   ├── migrations/
+│   └── templates/accounting/
+│       ├── accounts/
+│       ├── transactions/
+│       ├── reports/
+│       └── journal/
+│
+├── inventory/                          # คลังสินค้า
+│   ├── __init__.py
+│   ├── models.py                      # Product, Stock, Warehouse
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── serializers.py
+│   ├── signals.py
+│   ├── utils.py
+│   ├── reports.py                     # Stock reports
+│   ├── barcode.py                     # Barcode generation
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   │       ├── __init__.py
+│   │       ├── import_products.py
+│   │       └── update_stock.py
+│   ├── migrations/
+│   └── templates/inventory/
+│       ├── products/
+│       ├── stock/
+│       ├── warehouse/
+│       └── reports/
+│
+├── sales/                              # ขาย
+│   ├── __init__.py
+│   ├── models.py                      # Sale, SaleItem, Customer
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── serializers.py
+│   ├── signals.py
+│   ├── utils.py
+│   ├── reports.py                     # Sales reports
+│   ├── invoice.py                     # Invoice generation
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   ├── migrations/
+│   └── templates/sales/
+│       ├── orders/
+│       ├── invoices/
+│       ├── customers/
+│       └── reports/
+│
+├── purchasing/                         # ซื้อ
+│   ├── __init__.py
+│   ├── models.py                      # Purchase, PurchaseItem, Supplier
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── serializers.py
+│   ├── signals.py
+│   ├── utils.py
+│   ├── reports.py                     # Purchase reports
+│   ├── po.py                          # Purchase Order generation
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   ├── migrations/
+│   └── templates/purchasing/
+│       ├── orders/
+│       ├── suppliers/
+│       ├── receiving/
+│       └── reports/
+│
+├── hr/                                 # ทรัพยากรบุคคล
+│   ├── __init__.py
+│   ├── models.py                      # Employee, Department, Position
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── serializers.py
+│   ├── signals.py
+│   ├── utils.py
+│   ├── payroll.py                     # Payroll calculation
+│   ├── attendance.py                  # Attendance tracking
+│   ├── leave.py                       # Leave management
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   ├── migrations/
+│   └── templates/hr/
+│       ├── employees/
+│       ├── payroll/
+│       ├── attendance/
+│       └── leave/
+│
+├── crm/                               # Customer Relationship Management
+│   ├── __init__.py
+│   ├── models.py                      # Lead, Contact, Opportunity
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── serializers.py
+│   ├── signals.py
+│   ├── utils.py
+│   ├── pipeline.py                    # Sales pipeline
+│   ├── email_marketing.py             # Email campaigns
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   ├── migrations/
+│   └── templates/crm/
+│       ├── leads/
+│       ├── contacts/
+│       ├── opportunities/
+│       └── campaigns/
+│
+├── project/                           # Project Management
+│   ├── __init__.py
+│   ├── models.py                      # Project, Task, Milestone
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── serializers.py
+│   ├── signals.py
+│   ├── utils.py
+│   ├── gantt.py                       # Gantt chart data
+│   ├── timetracking.py                # Time tracking
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   ├── migrations/
+│   └── templates/project/
+│       ├── projects/
+│       ├── tasks/
+│       ├── gantt/
+│       └── reports/
+│
+├── manufacturing/                      # การผลิต
+│   ├── __init__.py
+│   ├── models.py                      # BOM, WorkOrder, Production
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── serializers.py
+│   ├── signals.py
+│   ├── utils.py
+│   ├── bom.py                         # Bill of Materials
+│   ├── production.py                  # Production planning
+│   ├── quality.py                     # Quality control
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   ├── migrations/
+│   └── templates/manufacturing/
+│       ├── bom/
+│       ├── workorders/
+│       ├── production/
+│       └── quality/
+│
+├── maintenance/                        # การบำรุงรักษา
+│   ├── __init__.py
+│   ├── models.py                      # Asset, MaintenanceSchedule
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── serializers.py
+│   ├── signals.py
+│   ├── utils.py
+│   ├── scheduler.py                   # Maintenance scheduling
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   ├── migrations/
+│   └── templates/maintenance/
+│       ├── assets/
+│       ├── schedules/
+│       └── workorders/
+│
+├── reporting/                          # รายงาน
+│   ├── __init__.py
+│   ├── models.py                      # Report, ReportTemplate
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── serializers.py
+│   ├── generators.py                  # Report generators
+│   ├── exporters.py                   # PDF, Excel exporters
+│   ├── charts.py                      # Chart generators
+│   ├── dashboard_reports.py           # Dashboard reports
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   ├── migrations/
+│   └── templates/reporting/
+│       ├── reports/
+│       ├── charts/
+│       └── exports/
+│
+├── workflow/                           # Workflow Management
+│   ├── __init__.py
+│   ├── models.py                      # Workflow, WorkflowState
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── serializers.py
+│   ├── engine.py                      # Workflow engine
+│   ├── approvals.py                   # Approval processes
+│   ├── notifications.py               # Workflow notifications
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   ├── migrations/
+│   └── templates/workflow/
+│
+├── notifications/                      # Notification System
+│   ├── __init__.py
+│   ├── models.py                      # Notification, NotificationTemplate
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── serializers.py
+│   ├── signals.py
+│   ├── email.py                       # Email notifications
+│   ├── sms.py                         # SMS notifications
+│   ├── push.py                        # Push notifications
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   ├── migrations/
+│   └── templates/notifications/
+│
+├── api/                               # REST API
+│   ├── __init__.py
+│   ├── v1/
+│   │   ├── __init__.py
+│   │   ├── urls.py
+│   │   ├── views.py
+│   │   ├── serializers.py
+│   │   ├── permissions.py
+│   │   ├── filters.py
+│   │   ├── pagination.py
+│   │   └── throttling.py
+│   ├── v2/                            # Future API versions
+│   ├── documentation.py               # API documentation
+│   ├── authentication.py              # API authentication
+│   └── utils.py
+│
+├── integrations/                       # Third-party Integrations
+│   ├── __init__.py
+│   ├── models.py                      # Integration configs
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── accounting/                    # Accounting integrations
+│   │   ├── __init__.py
+│   │   ├── quickbooks.py
+│   │   └── xero.py
+│   ├── payment/                       # Payment gateways
+│   │   ├── __init__.py
+│   │   ├── stripe.py
+│   │   ├── paypal.py
+│   │   └── promptpay.py
+│   ├── shipping/                      # Shipping providers
+│   │   ├── __init__.py
+│   │   ├── thailand_post.py
+│   │   └── kerry.py
+│   ├── social/                        # Social media
+│   │   ├── __init__.py
+│   │   ├── line.py
+│   │   └── facebook.py
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   └── migrations/
+│
+├── audit/                             # Audit Trail
+│   ├── __init__.py
+│   ├── models.py                      # AuditLog, ChangeLog
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── serializers.py
+│   ├── middleware.py                  # Audit middleware
+│   ├── signals.py                     # Audit signals
+│   ├── utils.py
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   ├── migrations/
+│   └── templates/audit/
+│
+├── backup/                            # Backup & Restore
+│   ├── __init__.py
+│   ├── models.py                      # BackupJob, RestoreJob
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── tasks.py                       # Celery tasks
+│   ├── storage.py                     # Backup storage
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   │       ├── __init__.py
+│   │       ├── backup_database.py
+│   │       └── restore_database.py
+│   ├── migrations/
+│   └── templates/backup/
+│
+├── settings/                          # System Settings
+│   ├── __init__.py
+│   ├── models.py                      # SystemSetting, CompanyInfo
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── serializers.py
+│   ├── cache.py                       # Settings cache
+│   ├── management/
+│   │   ├── __init__.py
+│   │   └── commands/
+│   ├── migrations/
+│   └── templates/settings/
+│
+├── tests/                             # Test files
+│   ├── __init__.py
+│   ├── test_accounting/
+│   ├── test_inventory/
+│   ├── test_sales/
+│   ├── test_purchasing/
+│   ├── test_hr/
+│   ├── factories.py                   # Test data factories
+│   ├── fixtures/
+│   └── utils.py
+│
+├── docs/                              # Documentation
+│   ├── api/
+│   ├── user_guide/
+│   ├── developer_guide/
+│   ├── deployment/
+│   └── changelog.md
+│
+├── scripts/                           # Deployment & utility scripts
+│   ├── deploy.sh
+│   ├── backup.sh
+│   ├── migrate.sh
+│   └── setup.py
+│
+├── docker/                            # Docker configuration
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   ├── docker-compose.prod.yml
+│   └── entrypoint.sh
+│
+└── deployment/                        # Deployment configs
+    ├── nginx/
+    ├── supervisor/
+    ├── systemd/
+    └── kubernetes/
+```
+
+## คำอธิบายโมดูลหลัก
+
+### Core Modules (โมดูลหลัก)
+- **accounting**: ระบบบัญชี - บัญชีรายได้/รายจ่าย, งบการเงิน
+- **inventory**: ระบบคลังสินค้า - สต็อก, คลังสินค้า, การเคลื่อนไหว
+- **sales**: ระบบขาย - ใบเสนอราคา, ใบส่งสินค้า, ใบกำกับภาษี
+- **purchasing**: ระบบซื้อ - ใบสั่งซื้อ, ใบรับสินค้า, การจ่ายเงิน
+- **hr**: ทรัพยากรบุคคล - พนักงาน, เงินเดือน, ลาป่วย
+
+### Support Modules (โมดูลสนับสนุน)
+- **crm**: บริหารลูกค้า - ลูกค้าเป้าหมาย, โอกาสการขาย
+- **project**: บริหารโปรเจค - งาน, ไทม์ไลน์, ทีม
+- **manufacturing**: การผลิต - สูตรการผลิต, แผนการผลิต
+- **maintenance**: การบำรุงรักษา - อุปกรณ์, กำหนดการบำรุง
+
+### System Modules (โมดูลระบบ)
+- **users**: จัดการผู้ใช้งาน
+- **authentication**: ระบบล็อกอิน/ออก
+- **dashboard**: หน้าแดชบอร์ด
+- **reporting**: ระบบรายงาน
+- **workflow**: ระบบอนุมัติ
+- **notifications**: ระบบแจ้งเตือน
+- **api**: REST API
+- **integrations**: เชื่อมต่อระบบภายนอก
+- **audit**: ติดตามการใช้งาน
+- **backup**: สำรองข้อมูล
+- **settings**: ตั้งค่าระบบ
