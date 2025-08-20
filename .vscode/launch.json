@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Dart: Run all Tests",
+            "type": "dart",
+            "request": "launch",
+            "program": "./test/"
+        },
+        {
+            "name": "Dart: Run main.dart",
+            "type": "dart",
+            "request": "launch",
+            "program": "./lib/main.dart"
+        },
+        {
+            "name": "Dart: Run main.dart in debug mode",
+            "type": "dart",
+            "request": "launch",
+            "program": "./lib/main.dart",
+            "args": ["--enable-asserts"]
+        },
+    ]
+}
