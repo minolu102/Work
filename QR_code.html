@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Inventory Scanner - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #f79f23, #f79f23);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .main-content {
+            padding: 20px;
+        }
+
+        /* Login Styles */
+        .login-section {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .login-section h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .register-link a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+
+        /* User Panel */
+        .user-panel {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover {
+            background: #d32f2f;
+        }
+
+        /* Database Management */
+        .db-panel {
+            background: #e3f2fd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .db-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .db-stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .db-stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+
+        .db-stat-label {
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .db-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .db-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+
+        .db-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .db-btn.backup {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .db-btn.restore {
+            background: #FF9800;
+            color: white;
+        }
+
+        .db-btn.clear {
+            background: #f44336;
+            color: white;
+        }
+
+        .db-btn.sync {
+            background: #2196F3;
+            color: white;
+        }
+
+        /* Rest of the original styles */
+        .scanner-section {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        #video {
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            border: 3px solid #e4ab39;
+            border-radius: 10px;
+            background: #f0f0f0;
+            object-fit: cover;
+        }
+
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+            color: white;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .inventory-table th,
+        .inventory-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        .inventory-table th {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .inventory-table tbody tr:hover {
+            background: #f5f5f5;
+        }
+
+        .status {
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .manual-input {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px dashed #4CAF50;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"], input[type="number"], input[type="password"], input[type="email"], select {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #4CAF50;
+        }
+
+        .stat-number {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+            font-size: 12px;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .debug-info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        .barcode-input {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .barcode-input input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .login-section {
+                margin: 20px;
+                padding: 20px;
+            }
+
+            .main-content {
+                padding: 15px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            input[type="text"], input[type="number"], input[type="password"], input[type="email"], select {
+                min-width: 100%;
+            }
+
+            .inventory-table th,
+            .inventory-table td {
+                padding: 6px 8px;
+                font-size: 12px;
+            }
+
+            .user-panel {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .db-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Section -->
+    <div id="loginSection" class="login-section">
+        <h2>🔐 เข้าสู่ระบบ Inventory Scanner</h2>
+        
+        <div id="loginMessage"></div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">ชื่อผู้ใช้:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">รหัสผ่าน:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="login-btn">เข้าสู่ระบบ</button>
+        </form>
+        
+        <div class="register-link">
+            ยังไม่มีบัญชี? <a href="#" onclick="showRegisterForm()">สมัครสมาชิก</a>
+        </div>
+    </div>
+
+    <!-- Register Section -->
+    <div id="registerSection" class="login-section hidden">
+        <h2>📝 สมัครสมาชิกใหม่</h2>
+        
+        <div id="registerMessage"></div>
+        
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="regUsername">ชื่อผู้ใช้:</label>
+                <input type="text" id="regUsername" name="regUsername" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="regEmail">อีเมล:</label>
+                <input type="email" id="regEmail" name="regEmail" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="regPassword">รหัสผ่าน:</label>
+                <input type="password" id="regPassword" name="regPassword" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="regPasswordConfirm">ยืนยันรหัสผ่าน:</label>
+                <input type="password" id="regPasswordConfirm" name="regPasswordConfirm" required>
+            </div>
+            
+            <button type="submit" class="login-btn">สมัครสมาชิก</button>
+        </form>
+        
+        <div class="register-link">
+            มีบัญชีแล้ว? <a href="#" onclick="showLoginForm()">เข้าสู่ระบบ</a>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="container hidden">
+        <div class="header">
+            <h1>📱QR - CODE</h1>
+            <p>สแกน QR Code เพื่อจัดการสินค้าคงคลัง</p>
+            <p>Netechinter co.,ltd.</p>
+        </div>
+
+        <!-- User Panel -->
+        <div class="user-panel">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <div>
+                    <div><strong id="currentUser">ผู้ใช้</strong></div>
+                    <div style="font-size: 12px; color: #666;" id="userEmail">user@example.com</div>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="logout()">ออกจากระบบ</button>
+        </div>
+
+        <!-- Database Management Panel -->
+        <div class="db-panel">
+            <h3>📊 จัดการฐานข้อมูล</h3>
+            <div class="db-stats">
+                <div class="db-stat-card">
+                    <div class="db-stat-number" id="dbUsers">0</div>
+                    <div class="db-stat-label">ผู้ใช้ทั้งหมด</div>
+                </div>
+                <div class="db-stat-card">
+                    <div class="db-stat-number" id="dbInventoryItems">0</div>
+                    <div class="db-stat-label">สินค้าในระบบ</div>
+                </div>
+                <div class="db-stat-card">
+                    <div class="db-stat-number" id="dbLastBackup">-</div>
+                    <div class="db-stat-label">สำรองข้อมูลล่าสุด</div>
+                </div>
+                <div class="db-stat-card">
+                    <div class="db-stat-number" id="dbSize">0</div>
+                    <div class="db-stat-label">ขนาดฐานข้อมูล (KB)</div>
+                </div>
+            </div>
+            <div class="db-actions">
+                <button class="db-btn backup" onclick="backupDatabase()">📤 สำรองข้อมูล</button>
+                <button class="db-btn restore" onclick="restoreDatabase()">📥 กู้คืนข้อมูล</button>
+                <button class="db-btn sync" onclick="syncData()">🔄 ซิงค์ข้อมูล</button>
+                <button class="db-btn clear" onclick="clearDatabase()">🗑️ ลบฐานข้อมูล</button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <!-- Stats Section -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalItems">0</div>
+                    <div class="stat-label">Products List</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalScanned">0</div>
+                    <div class="stat-label">Scan Count</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="lowStock">0</div>
+                    <div class="stat-label">Low Stock</div>
+                </div>
+            </div>
+
+            <!-- Scanner Section -->
+            <div class="scanner-section">
+                <video playsinline autoplay muted id="video"></video>
+                
+                <div class="controls">
+                    <button id="startBtn" class="btn-primary" onclick="startScanner()">เริ่มสแกน</button>
+                    <button id="stopBtn" class="btn-danger" onclick="stopScanner()" disabled>หยุดสแกน</button>
+                    <button class="btn-secondary" onclick="switchCamera()">เปลี่ยนกล้อง</button>
+                    <button class="btn-secondary" onclick="toggleDebug()">Debug</button>
+                </div>
+
+                <div class="debug-info" id="debugInfo" style="display: none;">
+                    <div>API Support: <span id="apiSupport">-</span></div>
+                    <div>สถานะ: <span id="debugStatus">ไม่ได้เริ่ม</span></div>
+                    <div>ความละเอียด: <span id="debugResolution">-</span></div>
+                    <div>จำนวนการสแกน: <span id="debugScanCount">0</span></div>
+                    <div>ข้อผิดพลาด: <span id="debugError">-</span></div>
+                </div>
+            </div>
+
+            <!-- Barcode Input Section -->
+            <div class="barcode-input">
+                <h4>📷 กรุณาเพิ่มรายการด้วยตนเองก่อน (QR Scanner ยังไม่พร้อม)</h4>
+                <input type="text" id="barcodeInput" placeholder="สแกนบาร์โค้ดหรือพิมพ์รหัสสินค้า แล้วกด Enter" onkeypress="handleBarcodeInput(event)">
+                <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                    💡 เคล็ดลับ: ใช้เครื่องอ่านบาร์โค้ดแบบ USB หรือ Bluetooth เพื่อสแกนได้ง่ายขึ้น
+                </p>
+            </div>
+
+            <!-- Manual Input Section -->
+            <div class="manual-input" id="manualInput" style="display: none;">
+                <h3>เพิ่มรายการสินค้าด้วยตนเอง</h3>
+                <div class="input-group">
+                    <input type="text" id="manualId" placeholder="รหัสสินค้า">
+                    <input type="text" id="manualName" placeholder="ชื่อสินค้า">
+                </div>
+                <div class="input-group">
+                    <input type="number" id="manualQuantity" placeholder="จำนวน" min="0" value="1">
+                    <select id="manualCategory">
+                        <option value="">None</option>
+                        <option value="Import">Import</option>
+                        <option value="Factory">Factory</option>
+                        <option value="ซื้อมาขายไป">ซื้อมาขายไป</option>
+                        <option value="วัตถุดิบ">วัตถุดิบ</option>
+                        <option value="อื่นๆ">อื่นๆ</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <button class="btn-primary" onclick="addManualItem()">เพิ่มรายการ</button>
+                    <button class="btn-secondary" onclick="toggleManualInput()">ปิด</button>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn-secondary" onclick="toggleManualInput()">เพิ่มข้อมูลด้วยตนเอง</button>
+                <button class="btn-secondary" onclick="exportData()">ส่งออกข้อมูล</button>
+                <button class="btn-secondary" onclick="clearAllData()">ลบข้อมูลทั้งหมด</button>
+                <button class="btn-secondary" onclick="addSampleData()">เพิ่มข้อมูลตัวอย่าง</button>
+            </div>
+
+            <!-- Result Section -->
+            <div class="result-section" id="result">
+                <h3>ผลการสแกน</h3>
+                <p id="resultText">พร้อมสำหรับการเพิ่มข้อมูล</p>
+            </div>
+
+            <!-- Inventory Table -->
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>SKU_CODE</th>
+                        <th>SKU_NAME</th>
+                        <th>Qty</th>
+                        <th>Group</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                        <th>Edit</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryBody">
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #666;">ไม่มีข้อมูลสินค้า - เริ่มต้นโดยการเพิ่มข้อมูลตัวอย่าง</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- File input for database restore -->
+    <input type="file" id="restoreFileInput" accept=".json" style="display: none;" onchange="handleRestoreFile(event)">
+
+    <script>
+        // Database and Authentication System
+        class InventoryDB {
+            constructor() {
+                this.users = this.loadUsers();
+                this.inventory = {};
+                this.currentUser = null;
+                this.initializeDefaultUsers();
+            }
+
+            initializeDefaultUsers() {
+                if (this.users.length === 0) {
+                    // Create default admin user
+                    this.createUser('admin', 'admin@netechinter.com', 'admin123');
+                    this.createUser('user', 'user@netechinter.com', 'user123');
+                }
+            }
+
+            createUser(username, email, password) {
+                const hashedPassword = this.hashPassword(password);
+                const user = {
+                    id: Date.now(),
+                    username,
+                    email,
+                    password: hashedPassword,
+                    createdAt: new Date().toISOString(),
+                    lastLogin: null
+                };
+                
+                this.users.push(user);
+                this.saveUsers();
+                return user;
+            }
+
+            hashPassword(password) {
+                // Simple hash function - in real app use bcrypt or similar
+                let hash = 0;
+                for (let i = 0; i < password.length; i++) {
+                    const char = password.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+                return hash.toString();
+            }
+
+            verifyUser(username, password) {
+                const user = this.users.find(u => u.username === username);
+                if (!user) return null;
+                
+                const hashedPassword = this.hashPassword(password);
+                if (user.password === hashedPassword) {
+                    user.lastLogin = new Date().toISOString();
+                    this.saveUsers();
+                    return user;
+                }
+                return null;
+            }
+
+            loadUsers() {
+                try {
+                    const users = JSON.parse(localStorage.getItem('inventory_users') || '[]');
+                    return users;
+                } catch (e) {
+                    return [];
+                }
+            }
+
+            saveUsers() {
+                localStorage.setItem('inventory_users', JSON.stringify(this.users));
+                this.updateDBStats();
+            }
+
+            loadUserInventory(userId) {
+                try {
+                    const key = `inventory_${userId}`;
+                    return JSON.parse(localStorage.getItem(key) || '[]');
+                } catch (e) {
+                    return [];
+                }
+            }
+
+            saveUserInventory(userId, inventory) {
+                const key = `inventory_${userId}`;
+                localStorage.setItem(key, JSON.stringify(inventory));
+                this.updateDBStats();
+            }
+
+            updateDBStats() {
+                document.getElementById('dbUsers').textContent = this.users.length;
+                
+                let totalItems = 0;
+                this.users.forEach(user => {
+                    const userInventory = this.loadUserInventory(user.id);
+                    totalItems += userInventory.length;
+                });
+                document.getElementById('dbInventoryItems').textContent = totalItems;
+
+                // Calculate storage size
+                let totalSize = 0;
+                for (let key in localStorage) {
+                    if (key.startsWith('inventory_') || key === 'inventory_users') {
+                        totalSize += localStorage[key].length;
+                    }
+                }
+                document.getElementById('dbSize').textContent = Math.round(totalSize / 1024);
+
+                // Last backup
+                const lastBackup = localStorage.getItem('last_backup_date');
+                document.getElementById('dbLastBackup').textContent = 
+                    lastBackup ? new Date(lastBackup).toLocaleDateString('th-TH') : 'ไม่เคย';
+            }
+
+            exportAllData() {
+                const allData = {
+                    users: this.users.map(user => ({
+                        ...user,
+                        password: '[PROTECTED]' // Don't export passwords
+                    })),
+                    inventories: {},
+                    exportDate: new Date().toISOString(),
+                    version: '1.0'
+                };
+
+                this.users.forEach(user => {
+                    allData.inventories[user.id] = this.loadUserInventory(user.id);
+                });
+
+                return allData;
+            }
+
+            importAllData(data) {
+                if (!data.users || !data.inventories) {
+                    throw new Error('Invalid backup file format');
+                }
+
+                // Import users (without passwords for security)
+                // In real app, you'd handle password reset separately
+                
+                // Import inventories
+                Object.keys(data.inventories).forEach(userId => {
+                    if (data.inventories[userId]) {
+                        this.saveUserInventory(userId, data.inventories[userId]);
+                    }
+                });
+
+                return true;
+            }
+
+            clearAllData() {
+                // Clear all inventory data but keep users
+                this.users.forEach(user => {
+                    localStorage.removeItem(`inventory_${user.id}`);
+                });
+                this.updateDBStats();
+            }
+
+            deleteAllData() {
+                // Clear everything including users
+                for (let key in localStorage) {
+                    if (key.startsWith('inventory_') || key === 'inventory_users') {
+                        localStorage.removeItem(key);
+                    }
+                }
+                this.users = [];
+                this.initializeDefaultUsers();
+                this.updateDBStats();
+            }
+        }
+
+        // Global variables
+        let db = new InventoryDB();
+        let video, currentStream = null;
+        let facingMode = "environment";
+        let inventory = [];
+        let scanCount = 0;
+        let debugMode = false;
+        let barcodeDetector = null;
+        let isScanning = false;
+        let currentUser = null;
+
+        // Initialize app
+        window.onload = function() {
+            checkAuthentication();
+        };
+
+        // Authentication Functions
+        function checkAuthentication() {
+            const savedUser = localStorage.getItem('current_user');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    showMainApp();
+                } catch (e) {
+                    localStorage.removeItem('current_user');
+                    showLoginForm();
+                }
+            } else {
+                showLoginForm();
+            }
+        }
+
+        function showLoginForm() {
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('registerSection').classList.add('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('username').focus();
+        }
+
+        function showRegisterForm() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('registerSection').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('regUsername').focus();
+        }
+
+        function showMainApp() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('registerSection').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            
+            // Update user info display
+            if (currentUser) {
+                document.getElementById('currentUser').textContent = currentUser.username;
+                document.getElementById('userEmail').textContent = currentUser.email;
+                document.getElementById('userAvatar').textContent = currentUser.username.charAt(0).toUpperCase();
+                
+                // Load user's inventory
+                inventory = db.loadUserInventory(currentUser.id);
+                renderInventoryTable();
+                updateStats();
+                checkAPIsupport();
+                db.updateDBStats();
+                
+                setTimeout(() => {
+                    document.getElementById('barcodeInput').focus();
+                }, 500);
+            }
+        }
+
+        function showMessage(elementId, message, type = 'error') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="${type}-message">${message}</div>`;
+            setTimeout(() => {
+                element.innerHTML = '';
+            }, 5000);
+        }
+
+        // Login Form Handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const username = document.getElementById('username').value.trim();
+                    const password = document.getElementById('password').value;
+                    
+                    if (!username || !password) {
+                        showMessage('loginMessage', 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน', 'error');
+                        return;
+                    }
+                    
+                    const user = db.verifyUser(username, password);
+                    if (user) {
+                        currentUser = user;
+                        localStorage.setItem('current_user', JSON.stringify(user));
+                        showMessage('loginMessage', 'เข้าสู่ระบบสำเร็จ!', 'success');
+                        setTimeout(() => {
+                            showMainApp();
+                        }, 1000);
+                    } else {
+                        showMessage('loginMessage', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', 'error');
+                    }
+                });
+            }
+
+            // Register Form Handler
+            const registerForm = document.getElementById('registerForm');
+            if (registerForm) {
+                registerForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const username = document.getElementById('regUsername').value.trim();
+                    const email = document.getElementById('regEmail').value.trim();
+                    const password = document.getElementById('regPassword').value;
+                    const passwordConfirm = document.getElementById('regPasswordConfirm').value;
+                    
+                    if (!username || !email || !password || !passwordConfirm) {
+                        showMessage('registerMessage', 'กรุณากรอกข้อมูลให้ครบทุกช่อง', 'error');
+                        return;
+                    }
+                    
+                    if (password !== passwordConfirm) {
+                        showMessage('registerMessage', 'รหัสผ่านไม่ตรงกัน', 'error');
+                        return;
+                    }
+                    
+                    if (password.length < 6) {
+                        showMessage('registerMessage', 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร', 'error');
+                        return;
+                    }
+                    
+                    // Check if username exists
+                    if (db.users.find(u => u.username === username)) {
+                        showMessage('registerMessage', 'ชื่อผู้ใช้นี้มีอยู่แล้ว', 'error');
+                        return;
+                    }
+                    
+                    // Check if email exists
+                    if (db.users.find(u => u.email === email)) {
+                        showMessage('registerMessage', 'อีเมลนี้ได้รับการลงทะเบียนแล้ว', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        const newUser = db.createUser(username, email, password);
+                        showMessage('registerMessage', 'สมัครสมาชิกสำเร็จ! กำลังเข้าสู่ระบบ...', 'success');
+                        
+                        setTimeout(() => {
+                            currentUser = newUser;
+                            localStorage.setItem('current_user', JSON.stringify(newUser));
+                            showMainApp();
+                        }, 1500);
+                    } catch (error) {
+                        showMessage('registerMessage', 'เกิดข้อผิดพลาดในการสมัครสมาชิก', 'error');
+                    }
+                });
+            }
+        });
+
+        function logout() {
+            if (confirm('ต้องการออกจากระบบหรือไม่?')) {
+                currentUser = null;
+                localStorage.removeItem('current_user');
+                
+                // Stop scanner if running
+                if (isScanning) {
+                    stopScanner();
+                }
+                
+                // Clear sensitive data
+                inventory = [];
+                
+                showLoginForm();
+            }
+        }
+
+        // Database Management Functions
+        function backupDatabase() {
+            try {
+                const backupData = db.exportAllData();
+                const dataStr = JSON.stringify(backupData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `inventory_backup_${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                localStorage.setItem('last_backup_date', new Date().toISOString());
+                db.updateDBStats();
+                
+                updateResultText('📤 สำรองข้อมูลสำเร็จ!');
+            } catch (error) {
+                updateResultText('❌ เกิดข้อผิดพลาดในการสำรองข้อมูล: ' + error.message);
+            }
+        }
+
+        function restoreDatabase() {
+            if (confirm('การกู้คืนข้อมูลจะเขียนทับข้อมูลปัจจุบัน ต้องการดำเนินการต่อหรือไม่?')) {
+                document.getElementById('restoreFileInput').click();
+            }
+        }
+
+        function handleRestoreFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    db.importAllData(backupData);
+                    
+                    // Reload current user's data
+                    if (currentUser) {
+                        inventory = db.loadUserInventory(currentUser.id);
+                        renderInventoryTable();
+                        updateStats();
+                    }
+                    
+                    updateResultText('📥 กู้คืนข้อมูลสำเร็จ!');
+                } catch (error) {
+                    updateResultText('❌ ไฟล์สำรองข้อมูลไม่ถูกต้อง: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function syncData() {
+            // Simulate data synchronization
+            updateResultText('🔄 กำลังซิงค์ข้อมูล...');
+            
+            setTimeout(() => {
+                // Save current user's inventory
+                if (currentUser) {
+                    db.saveUserInventory(currentUser.id, inventory);
+                }
+                
+                // Update stats
+                db.updateDBStats();
+                
+                updateResultText('✅ ซิงค์ข้อมูลเสร็จสิ้น!');
+            }, 2000);
+        }
+
+        function clearDatabase() {
+            if (confirm('ต้องการลบข้อมูลสินค้าทั้งหมด (ไม่รวมข้อมูลผู้ใช้) หรือไม่? การดำเนินการนี้ไม่สามารถกู้คืนได้!')) {
+                if (confirm('คุณแน่ใจหรือไม่? ข้อมูลทั้งหมดจะถูกลบ!')) {
+                    db.clearAllData();
+                    inventory = [];
+                    renderInventoryTable();
+                    updateStats();
+                    updateResultText('🗑️ ลบฐานข้อมูลสินค้าเสร็จสิ้น');
+                }
+            }
+        }
+
+        // Original QR Scanner Functions (Updated to work with user system)
+        function checkAPIsupport() {
+            let support = [];
+            
+            if ('BarcodeDetector' in window) {
+                support.push('Barcode Detection API');
+                initBarcodeDetector();
+            }
+            
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                support.push('Camera API');
+            }
+            
+            document.getElementById('apiSupport').textContent = 
+                support.length > 0 ? support.join(', ') : 'ไม่รองรับ API';
+        }
+
+        async function initBarcodeDetector() {
+            try {
+                barcodeDetector = new BarcodeDetector({
+                    formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'ean_8']
+                });
+                updateDebugInfo('debugStatus', 'Barcode Detector พร้อม');
+            } catch (err) {
+                console.log('Barcode Detection not supported:', err);
+            }
+        }
+
+        function handleBarcodeInput(event) {
+            if (event.key === 'Enter') {
+                const barcode = event.target.value.trim();
+                if (barcode) {
+                    processScannedData(barcode);
+                    event.target.value = '';
+                }
+            }
+        }
+
+        async function startScanner() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                updateResultText('❌ เบราว์เซอร์นี้ไม่รองรับการใช้กล้อง');
+                return;
+            }
+
+            try {
+                updateDebugInfo('debugStatus', 'กำลังเปิดกล้อง...');
+                updateResultText('กำลังเปิดกล้อง...');
+
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                }
+
+                const constraints = {
+                    video: {
+                        facingMode: facingMode,
+                        width: { ideal: 1280, min: 640 },
+                        height: { ideal: 720, min: 480 }
+                    }
+                };
+
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                video = document.getElementById('video');
+                video.srcObject = currentStream;
+                video.setAttribute('playsinline', true);
+                video.setAttribute('muted', true);
+                
+                video.onloadedmetadata = function() {
+                    updateDebugInfo('debugResolution', `${video.videoWidth}x${video.videoHeight}`);
+                };
+
+                await video.play();
+                
+                isScanning = true;
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                
+                updateDebugInfo('debugStatus', 'กำลังสแกน...');
+                updateResultText('🎯 กำลังสแกน... โปรดแสดง QR Code หรือบาร์โค้ดต่อกล้อง');
+                
+                if (barcodeDetector) {
+                    startBarcodeDetection();
+                } else {
+                    updateResultText('⚠️ กล้องเปิดแล้ว แต่ไม่รองรับการสแกนอัตโนมัติ กรุณาใช้การป้อนข้อมูลด้วยตนเอง');
+                }
+                
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                updateResultText(`❌ ไม่สามารถเข้าถึงกล้องได้: ${err.message}`);
+                updateDebugInfo('debugError', err.message);
+            }
+        }
+
+        async function startBarcodeDetection() {
+            if (!isScanning || !barcodeDetector) return;
+
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const barcodes = await barcodeDetector.detect(canvas);
+                
+                if (barcodes.length > 0) {
+                    const barcode = barcodes[0];
+                    processScannedData(barcode.rawValue);
+                    scanCount++;
+                    updateDebugInfo('debugScanCount', scanCount.toString());
+                    
+                    video.style.borderColor = '#00ff00';
+                    setTimeout(() => {
+                        if (video) video.style.borderColor = '#4CAF50';
+                    }, 1000);
+                    
+                    setTimeout(() => {
+                        if (isScanning) startBarcodeDetection();
+                    }, 2000);
+                } else {
+                    setTimeout(() => {
+                        if (isScanning) startBarcodeDetection();
+                    }, 100);
+                }
+            } catch (err) {
+                console.error('Barcode detection error:', err);
+                updateDebugInfo('debugError', err.message);
+                setTimeout(() => {
+                    if (isScanning) startBarcodeDetection();
+                }, 1000);
+            }
+        }
+
+        function stopScanner() {
+            isScanning = false;
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+            if (video) {
+                video.srcObject = null;
+            }
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            updateResultText('ℹ️ หยุดการสแกนแล้ว');
+            updateDebugInfo('debugStatus', 'หยุดแล้ว');
+        }
+
+        function switchCamera() {
+            facingMode = facingMode === "environment" ? "user" : "environment";
+            if (isScanning) {
+                stopScanner();
+                setTimeout(startScanner, 1000);
+            }
+        }
+
+        function processScannedData(data) {
+            console.log('Scanned data:', data);
+            
+            if (!data || data.trim() === '') {
+                updateResultText('❌ ข้อมูลที่สแกนไม่ถูกต้อง');
+                return;
+            }
+            
+            updateResultText(`✅ สแกนสำเร็จ! ข้อมูล: ${data}`);
+            
+            let itemData;
+            try {
+                if (data.trim().startsWith('{') || data.trim().startsWith('[')) {
+                    itemData = JSON.parse(data);
+                    if (!itemData.id) {
+                        itemData.id = data.substring(0, 20);
+                    }
+                } else {
+                    itemData = {
+                        id: data.trim(),
+                        name: `สินค้า ${data.trim()}`,
+                        quantity: 1,
+                        category: 'อื่นๆ'
+                    };
+                }
+            } catch (e) {
+                itemData = {
+                    id: data.trim(),
+                    name: `สินค้า ${data.trim()}`,
+                    quantity: 1,
+                    category: 'อื่นๆ'
+                };
+            }
+            
+            addOrUpdateInventory(itemData);
+            
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+            } catch (e) {
+                console.log('Audio feedback not supported');
+            }
+        }
+
+        function saveInventoryData() {
+            if (currentUser) {
+                db.saveUserInventory(currentUser.id, inventory);
+            }
+        }
+
+        function addOrUpdateInventory(item) {
+            const existingIndex = inventory.findIndex(inv => inv.id === item.id);
+            
+            if (existingIndex !== -1) {
+                inventory[existingIndex].quantity += item.quantity || 1;
+                inventory[existingIndex].lastUpdated = new Date().toLocaleString('th-TH');
+                updateResultText(`✅ อัปเดตรายการ "${inventory[existingIndex].name}" จำนวน ${inventory[existingIndex].quantity}`);
+            } else {
+                const newItem = {
+                    id: item.id,
+                    name: item.name || `สินค้า ${item.id}`,
+                    quantity: item.quantity || 1,
+                    category: item.category || 'อื่นๆ',
+                    lastUpdated: new Date().toLocaleString('th-TH'),
+                    scanned: true
+                };
+                inventory.push(newItem);
+                updateResultText(`✅ เพิ่มรายการใหม่ "${newItem.name}" จำนวน ${newItem.quantity}`);
+            }
+            
+            renderInventoryTable();
+            updateStats();
+            saveInventoryData();
+        }
+
+        function addManualItem() {
+            const id = document.getElementById('manualId').value.trim();
+            const name = document.getElementById('manualName').value.trim();
+            const quantity = parseInt(document.getElementById('manualQuantity').value) || 1;
+            const category = document.getElementById('manualCategory').value || 'อื่นๆ';
+            
+            if (!id || !name) {
+                alert('กรุณากรอกรหัสสินค้าและชื่อสินค้า');
+                return;
+            }
+            
+            addOrUpdateInventory({
+                id: id,
+                name: name,
+                quantity: quantity,
+                category: category
+            });
+            
+            document.getElementById('manualId').value = '';
+            document.getElementById('manualName').value = '';
+            document.getElementById('manualQuantity').value = '1';
+            document.getElementById('manualCategory').value = '';
+        }
+
+        function deleteItem(index) {
+            if (confirm('ต้องการลบรายการนี้หรือไม่?')) {
+                const deletedItem = inventory[index];
+                inventory.splice(index, 1);
+                renderInventoryTable();
+                updateStats();
+                saveInventoryData();
+                updateResultText(`🗑️ ลบรายการ "${deletedItem.name}" แล้ว`);
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('ต้องการลบข้อมูลทั้งหมดหรือไม่? การดำเนินการนี้ไม่สามารถกู้คืนได้!')) {
+                inventory = [];
+                renderInventoryTable();
+                updateStats();
+                saveInventoryData();
+                updateResultText('🗑️ ลบข้อมูลทั้งหมดแล้ว');
+            }
+        }
+
+        function renderInventoryTable() {
+            const tbody = document.getElementById('inventoryBody');
+            tbody.innerHTML = '';
+            
+            if (inventory.length === 0) {
+                const row = tbody.insertRow();
+                row.innerHTML = `<td colspan="8" style="text-align: center; color: #666;">ไม่มีข้อมูลสินค้า - เริ่มต้นโดยการเพิ่มข้อมูลตัวอย่าง</td>`;
+                return;
+            }
+            
+            inventory.forEach((item, index) => {
+                const row = tbody.insertRow();
+                const status = getStockStatus(item.quantity);
+                
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><strong>${item.id}</strong></td>
+                    <td>${item.name}</td>
+                    <td><strong>${item.quantity}</strong></td>
+                    <td>${item.category}</td>
+                    <td><span class="status ${status.class}">${status.text}</span></td>
+                    <td><small>${item.lastUpdated}</small></td>
+                    <td><button class="delete-btn" onclick="deleteItem(${index})">ลบ</button></td>
+                `;
+            });
+        }
+
+        function getStockStatus(quantity) {
+            if (quantity <= 0) {
+                return { class: 'error', text: 'หมด' };
+            } else if (quantity <= 5) {
+                return { class: 'warning', text: 'น้อย' };
+            } else {
+                return { class: 'success', text: 'ปกติ' };
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('totalItems').textContent = inventory.length;
+            document.getElementById('totalScanned').textContent = inventory.filter(item => item.scanned).length;
+            document.getElementById('lowStock').textContent = inventory.filter(item => item.quantity <= 5).length;
+        }
+
+        function updateResultText(text) {
+            document.getElementById('resultText').textContent = text;
+        }
+
+        function toggleManualInput() {
+            const section = document.getElementById('manualInput');
+            const isVisible = section.style.display !== 'none';
+            section.style.display = isVisible ? 'none' : 'block';
+            
+            if (!isVisible) {
+                setTimeout(() => {
+                    document.getElementById('manualId').focus();
+                }, 100);
+            }
+        }
+
+        function toggleDebug() {
+            debugMode = !debugMode;
+            const debugSection = document.getElementById('debugInfo');
+            debugSection.style.display = debugMode ? 'block' : 'none';
+        }
+
+        function updateDebugInfo(elementId, text) {
+            const element = document.getElementById(elementId);
+            if (element) element.textContent = text;
+        }
+
+        function exportData() {
+            if (inventory.length === 0) {
+                alert('ไม่มีข้อมูลให้ส่งออก');
+                return;
+            }
+            
+            let csv = '\ufeff';
+            csv += 'รหัสสินค้า,ชื่อสินค้า,จำนวน,หมวดหมู่,สถานะ,เวลาอัปเดท\n';
+            
+            inventory.forEach(item => {
+                const status = getStockStatus(item.quantity);
+                csv += `"${item.id}","${item.name}","${item.quantity}","${item.category}","${status.text}","${item.lastUpdated}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `inventory_${currentUser?.username || 'user'}_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            updateResultText(`📄 ส่งออกข้อมูล ${inventory.length} รายการสำเร็จ`);
+        }
+
+        function addSampleData() {
+            if (inventory.length > 0) {
+                if (!confirm('มีข้อมูลอยู่แล้ว ต้องการเพิ่มข้อมูลตัวอย่างหรือไม่?')) {
+                    return;
+                }
+            }
+            
+            const sampleItems = [
+                { id: 'P001', name: 'โทรศัพท์มือถือ iPhone 15', quantity: 10, category: 'อิเล็กทรอนิกส์' },
+                { id: 'P002', name: 'เสื้อยืดสีขาว Size M', quantity: 3, category: 'เสื้อผ้า' },
+                { id: 'P003', name: 'น้ำดื่ม 1.5 ลิตร', quantity: 50, category: 'อาหาร' },
+                { id: 'P004', name: 'หูฟัง Bluetooth', quantity: 2, category: 'อิเล็กทรอนิกส์' },
+                { id: 'P005', name: 'กางเกงยีนส์', quantity: 8, category: 'เสื้อผ้า' },
+                { id: 'BAR123456', name: 'สินค้าจากบาร์โค้ด', quantity: 15, category: 'อื่นๆ' },
+                { id: 'QR789012', name: 'สินค้าจาก QR Code', quantity: 25, category: 'อิเล็กทรอนิกส์' }
+            ];
+            
+            sampleItems.forEach(item => addOrUpdateInventory(item));
+            updateResultText(`✅ เพิ่มข้อมูลตัวอย่าง ${sampleItems.length} รายการแล้ว`);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Only work when main app is visible
+            if (document.getElementById('mainApp').classList.contains('hidden')) return;
+            
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                if (isScanning) {
+                    stopScanner();
+                } else {
+                    startScanner();
+                }
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
+                e.preventDefault();
+                toggleManualInput();
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                exportData();
+            }
+
+            if (e.key === 'F1') {
+                e.preventDefault();
+                alert('คีย์ลัด:\n- Ctrl+S: เริ่ม/หยุดสแกน\n- Ctrl+M: เปิด/ปิดการเพิ่มข้อมูลด้วยตนเอง\n- Ctrl+E: ส่งออกข้อมูล\n- Enter ในช่องบาร์โค้ด: เพิ่มข้อมูล');
+            }
+        });
+
+        // Handle Enter key in manual input forms
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = ['manualId', 'manualName', 'manualQuantity'];
+            inputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            addManualItem();
+                        }
+                    });
+                }
+            });
+
+            // Handle Enter key in login forms
+            ['username', 'password'].forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+                        }
+                    });
+                }
+            });
+
+            ['regUsername', 'regEmail', 'regPassword', 'regPasswordConfirm'].forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            document.getElementById('registerForm').dispatchEvent(new Event('submit'));
+                        }
+                    });
+                }
+            });
+        });
+
+        // Auto-focus management
+        function manageFocus() {
+            const mainApp = document.getElementById('mainApp');
+            const loginSection = document.getElementById('loginSection');
+            const registerSection = document.getElementById('registerSection');
+
+            if (!mainApp.classList.contains('hidden')) {
+                // Main app is visible
+                setTimeout(() => {
+                    const barcodeInput = document.getElementById('barcodeInput');
+                    if (barcodeInput) barcodeInput.focus();
+                }, 100);
+            } else if (!loginSection.classList.contains('hidden')) {
+                // Login form is visible
+                setTimeout(() => {
+                    const usernameInput = document.getElementById('username');
+                    if (usernameInput) usernameInput.focus();
+                }, 100);
+            } else if (!registerSection.classList.contains('hidden')) {
+                // Register form is visible
+                setTimeout(() => {
+                    const regUsernameInput = document.getElementById('regUsername');
+                    if (regUsernameInput) regUsernameInput.focus();
+                }, 100);
+            }
+        }
+
+        // Keep barcode input focused when in main app
+        document.addEventListener('click', function(e) {
+            if (document.getElementById('mainApp').classList.contains('hidden')) return;
+            
+            if (!e.target.matches('input, button, select, textarea')) {
+                setTimeout(() => {
+                    const barcodeInput = document.getElementById('barcodeInput');
+                    if (barcodeInput) barcodeInput.focus();
+                }, 100);
+            }
+        });
+
+        // Session timeout handling
+        let sessionTimeout;
+        const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
+        function resetSessionTimeout() {
+            if (sessionTimeout) clearTimeout(sessionTimeout);
+            
+            sessionTimeout = setTimeout(() => {
+                if (currentUser && confirm('เซสชันหมดอายุ ต้องการเข้าสู่ระบบใหม่หรือไม่?')) {
+                    logout();
+                }
+            }, SESSION_TIMEOUT);
+        }
+
+        // Reset timeout on user activity
+        ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+            document.addEventListener(event, resetSessionTimeout, true);
+        });
+
+        // Additional utility functions
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('th-TH', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function generateId() {
+            return 'ITM' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2, 3).toUpperCase();
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        // Initialize focus management
+        setTimeout(manageFocus, 500);
+
+        // Add some helpful tooltips
+        function addTooltips() {
+            const tooltipElements = [
+                { id: 'startBtn', text: 'เริ่มสแกน QR Code หรือบาร์โค้ด' },
+                { id: 'stopBtn', text: 'หยุดการสแกน' },
+                { id: 'barcodeInput', text: 'ป้อนรหัสสินค้าหรือใช้เครื่องอ่านบาร์โค้ด' }
+            ];
+
+            tooltipElements.forEach(item => {
+                const element = document.getElementById(item.id);
+                if (element) {
+                    element.title = item.text;
+                }
+            });
+        }
+
+        // Initialize tooltips after DOM is loaded
+        setTimeout(addTooltips, 1000);
+
+        // Enhanced error handling for camera
+        function handleCameraError(error) {
+            let errorMessage = 'ไม่สามารถเข้าถึงกล้องได้';
+            
+            switch (error.name) {
+                case 'NotAllowedError':
+                    errorMessage = 'กรุณาอนุญาตการใช้กล้องในเบราว์เซอร์';
+                    break;
+                case 'NotFoundError':
+                    errorMessage = 'ไม่พบกล้องในอุปกรณ์นี้';
+                    break;
+                case 'NotSupportedError':
+                    errorMessage = 'เบราว์เซอร์นี้ไม่รองรับการใช้กล้อง';
+                    break;
+                case 'NotReadableError':
+                    errorMessage = 'กล้องถูกใช้งานโดยแอปพลิเคชันอื่น';
+                    break;
+            }
+            
+            updateResultText(`❌ ${errorMessage}`);
+            updateDebugInfo('debugError', `${error.name}: ${error.message}`);
+        }
+
+        // Performance monitoring
+        let performanceStats = {
+            scanStartTime: 0,
+            totalScans: 0,
+            successfulScans: 0
+        };
+
+        function trackScanPerformance(success = false) {
+            performanceStats.totalScans++;
+            if (success) {
+                performanceStats.successfulScans++;
+            }
+            
+            if (debugMode) {
+                const successRate = ((performanceStats.successfulScans / performanceStats.totalScans) * 100).toFixed(1);
+                console.log(`Scan Success Rate: ${successRate}% (${performanceStats.successfulScans}/${performanceStats.totalScans})`);
+            }
+        }
+
+        // Auto-save functionality
+        setInterval(() => {
+            if (currentUser && inventory.length > 0) {
+                saveInventoryData();
+                if (debugMode) {
+                    console.log('Auto-saved inventory data');
+                }
+            }
+        }, 30000); // Auto-save every 30 seconds
+
+        // Service Worker for offline functionality (basic setup)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swScript = `
+                    const CACHE_NAME = 'qr-inventory-v1';
+                    const urlsToCache = [];
+                    
+                    self.addEventListener('install', (event) => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then((cache) => cache.addAll(urlsToCache))
+                        );
+                    });
+                `;
+                
+                const blob = new Blob([swScript], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                
+                navigator.serviceWorker.register(swUrl)
+                    .then((registration) => {
+                        if (debugMode) {
+                            console.log('ServiceWorker registration successful');
+                        }
+                    })
+                    .catch((error) => {
+                        if (debugMode) {
+                            console.log('ServiceWorker registration failed:', error);
+                        }
+                    });
+            });
+        }
+
+        // Export additional functions for external use if needed
+        window.InventoryApp = {
+            login: (username, password) => db.verifyUser(username, password),
+            logout: logout,
+            getCurrentUser: () => currentUser,
+            getInventory: () => inventory,
+            exportData: exportData,
+            clearData: clearAllData,
+            addItem: addOrUpdateInventory,
+            startScanner: startScanner,
+            stopScanner: stopScanner
+        };
+
+        // Add version info
+        console.log('%c🏢 QR Code Inventory Scanner v2.0', 'color: #4CAF50; font-weight: bold; font-size: 16px;');
+        console.log('%c📱 With User Authentication & Database Management', 'color: #2196F3; font-weight: bold;');
+        console.log('%c🏗️ Built by Netechinter Co., Ltd.', 'color: #f79f23; font-weight: bold;');
+        
+        // Default users info (for demo)
+        console.log('\n%c📋 Demo Users:', 'color: #666; font-weight: bold;');
+        console.log('%cAdmin: username="admin", password="admin123"', 'color: #333;');
+        console.log('%cUser: username="user", password="user123"', 'color: #333;');
+    </script>
+</body>
+</html>
